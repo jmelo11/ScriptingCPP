@@ -78,7 +78,7 @@ struct constVisitor
     void visit(const NODE &node)
     {
         //  Const visitors cannot declare non const visits: we check that and produce a compilation error
-        static_assert(!hasNonConstVisit<V>::forNodeType<NODE>(), "CONST VISITOR DECLARES A NON-CONST VISIT");
+        static_assert(!hasNonConstVisit<V>::template forNodeType<NODE>(), "CONST VISITOR DECLARES A NON-CONST VISIT");
 
         //  V does not declare a visit to that node type,
         //      either const or non const - fall back to visiting arguments
