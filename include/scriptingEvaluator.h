@@ -17,6 +17,7 @@ As long as this comment is preserved at the top of the file
 #pragma once
 
 #include <iostream>
+#include <cmath>
 
 #include "scriptingNodes.h"
 #include "scriptingScenarios.h"
@@ -132,7 +133,7 @@ public:
     }
 	void visit(const NodePow& node)
 	{ 
-        visitBinary(node, [](T& x, const T y) { x = pow(x, y); });
+        visitBinary(node, [](T& x, const T y) { x = std::pow(x, y); });
     }
     void visit(const NodeMax& node)
     {
@@ -163,11 +164,11 @@ public:
 	//	Functions
 	void visit(const NodeLog& node)
 	{
-        visitUnary(node, [](T& x) { x = log(x); });
+        visitUnary(node, [](T& x) { x = std::log(x); });
     }
 	void visit(const NodeSqrt& node)
 	{
-        visitUnary(node, [](T& x) { x = sqrt(x); });
+        visitUnary(node, [](T& x) { x = std::sqrt(x); });
     }
 
     //  Multies

@@ -29,29 +29,13 @@ struct Visitor
 {
     //  Visit a node with concrete visitor
     //      use this to hide the statc_cast
-    void visitNode(Node &node)
-    {
-        //  static_cast : visit as concrete visitor
-        node.accept(static_cast<V &>(*this));
-    }
+    void visitNode(Node &node);
 
     //  Visit all the arguments with concrete (type V) visitor
-    void visitArguments(Node &node)
-    {
-        for (auto &arg : node.arguments)
-        {
-            //  static_cast : visit as concrete visitor
-            arg->accept(static_cast<V &>(*this));
-        }
-    }
+    void visitArguments(Node &node);
 
     //  Default catch all = visit arguments
-    void visit(Node &node)
-    {
-        //  V does not declare a visit to that node type,
-        //      either const or non const - fall back to default visit arguments
-        visitArguments(node);
-    }
+    void visit(Node &node);
 };
 
 //  Const visitor
@@ -59,31 +43,12 @@ struct Visitor
 template <class V>
 struct constVisitor
 {
-    void visitNode(const Node &node)
-    {
-        //  static_cast : visit as concrete visitor
-        node.accept(static_cast<V &>(*this));
-    }
+    void visitNode(const Node &node);
 
-    void visitArguments(const Node &node)
-    {
-        for (const auto &arg : node.arguments)
-        {
-            //  static_cast : visit as visitor of type V
-            arg->accept(static_cast<V &>(*this));
-        }
-    }
+    void visitArguments(const Node &node);
 
     template <class NODE>
-    void visit(const NODE &node)
-    {
-        //  Const visitors cannot declare non const visits: we check that and produce a compilation error
-        static_assert(!hasNonConstVisit<V>::template forNodeType<NODE>(), "CONST VISITOR DECLARES A NON-CONST VISIT");
-
-        //  V does not declare a visit to that node type,
-        //      either const or non const - fall back to visiting arguments
-        visitArguments(node);
-    }
+    void visit(const NODE &node);
 };
 
 //  Visitable classes

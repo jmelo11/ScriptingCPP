@@ -17,6 +17,7 @@ As long as this comment is preserved at the top of the file
 #pragma once
 
 #include "scriptingEvaluator.h"
+#include <cmath>
 
 #define EPS 1.0e-12
 #define ONEMINUSEPS 0.999999999999
@@ -75,7 +76,7 @@ class FuzzyEvaluator : public EvaluatorBase<T, FuzzyEvaluator>
 		const double halfEps = 0.5 * eps;
 
 		if (x < - halfEps || x > halfEps) return 0.0;
-		else return ( halfEps - fabs( x)) / halfEps;
+		else return ( halfEps - std::fabs( x)) / halfEps;
 	}
 
 	//	Butterfly (lb,0,rb)
