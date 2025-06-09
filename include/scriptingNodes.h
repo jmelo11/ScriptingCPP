@@ -282,3 +282,5 @@ ExprTree make_base_binary(ExprTree &lhs, ExprTree &rhs)
     //	Return
     return top;
 }
+
+#include "scriptingVisitorImpl.h"
