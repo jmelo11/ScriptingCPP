@@ -14,10 +14,10 @@ template <class T> class FuzzyEvaluator;
 //  List
 
 //  Modifying visitors
-#define MVISITORS VarIndexer, ConstProcessor, ConstCondProcessor, IfProcessor, DomainProcessor
+#define MVISITORS VarIndexer
 
 //  Const visitors
-#define CVISITORS Debugger, Evaluator<double>, Compiler, FuzzyEvaluator<double>
+#define CVISITORS Evaluator<double>
 
 //  All visitors
 #define VISITORS MVISITORS , CVISITORS
