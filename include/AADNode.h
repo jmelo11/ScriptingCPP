@@ -19,14 +19,14 @@ As long as this comment is preserved at the top of the file
 //  AAD implementation of chapter 10
 //  (With multi-dimensional additions of chapter 14)
 
-//  Implementation of Node = record on tape
+//  Implementation of ADNode = record on tape
 
 //  Unchanged for AADET of chapter 15
 
 #include <exception>
 using namespace std;
 
-class Node
+class ADNode
 {
     friend class Tape;
     friend class Number;
@@ -55,7 +55,7 @@ class Node
     const size_t n;
 
 public:
-    Node(const size_t N = 0) : n(N) {}
+    ADNode(const size_t N = 0) : n(N) {}
 
     //  Access to adjoint(s)
     //	single

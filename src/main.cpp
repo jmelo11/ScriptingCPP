@@ -3,6 +3,7 @@
 #include "scriptingParser.h"
 #include "scriptingProduct.h"
 #include "visitorHeaders.h"
+#include "AADNumber.h"
 
 using Date = int;
 int main()
@@ -16,10 +17,10 @@ int main()
     Debugger d;
     prod.visit(d);
     cout << d.getString() << endl;
-    std::unique_ptr<Scenario<double>> scenario = prod.buildScenario<double>();
-    Evaluator<double> evaluator = prod.buildEvaluator<double>();
+    std::unique_ptr<Scenario<Number>> scenario = prod.buildScenario<Number>();
+    Evaluator<Number> evaluator = prod.buildEvaluator<Number>();
     prod.evaluate(*scenario, evaluator);
-    std::vector<double> values = evaluator.varVals();
+    std::vector<Number> values = evaluator.varVals();
     std::vector<string> var_names = prod.varNames();
     for (size_t i = 0; i < values.size(); i++)
     {

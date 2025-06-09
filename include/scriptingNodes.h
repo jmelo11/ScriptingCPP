@@ -247,7 +247,7 @@ Concrete *downcast(unique_ptr<Node> &node)
 template <typename ConcreteNode, typename... Args>
 unique_ptr<ConcreteNode> make_node(Args &&...args)
 {
-    return unique_ptr<ConcreteNode>(new ConcreteNode(forward<Args>(args)...));
+    return unique_ptr<ConcreteNode>(new ConcreteNode(std::forward<Args>(args)...));
 }
 
 //  Same but return as pointer on base

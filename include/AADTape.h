@@ -17,94 +17,91 @@ As long as this comment is preserved at the top of the file
 #ifndef FEE08509_4CE4_4ED9_9905_9014AE04FC88
 #define FEE08509_4CE4_4ED9_9905_9014AE04FC88
 
-
 //  AAD implementation of chapter 10
 //  (With multi-dimensional additions of chapter 14)
 
-//  Implementation of the Tape 
+//  Implementation of the Tape
 
 //  Unchanged for AADET of chapter 15
 
 #include "blocklist.h"
-#include <automatic/AADNode.h>
+#include "AADNode.h"
 
-constexpr size_t BLOCKSIZE  = 16384;		//	Number of nodes
-constexpr size_t ADJSIZE    = 32768;		//	Number of adjoints
-constexpr size_t DATASIZE   = 65536;		//	Data in bytes
+constexpr size_t BLOCKSIZE = 16384; //	Number of nodes
+constexpr size_t ADJSIZE = 32768;   //	Number of adjoints
+constexpr size_t DATASIZE = 65536;  //	Data in bytes
 
 class Tape
 {
-	//	Working with multiple results / adjoints?
-	static bool							multi;
+    //	Working with multiple results / adjoints?
+    static bool multi;
 
-	//  Storage for adjoints in multi-dimensional case (chapter 14)
-    blocklist<double, ADJSIZE>			myAdjointsMulti;
-    
-	//  Storage for derivatives and child adjoint pointers
-	blocklist<double, DATASIZE>			myDers;
-	blocklist<double*, DATASIZE>		myArgPtrs;
+    //  Storage for adjoints in multi-dimensional case (chapter 14)
+    blocklist<double, ADJSIZE> myAdjointsMulti;
+
+    //  Storage for derivatives and child adjoint pointers
+    blocklist<double, DATASIZE> myDers;
+    blocklist<double *, DATASIZE> myArgPtrs;
 
     //  Storage for the nodes
-	blocklist<Node, BLOCKSIZE>		    myNodes;
+    blocklist<ADNode, BLOCKSIZE> myADNodes;
 
-	//	Padding so tapes in a vector don't interfere
-    char                                myPad[64];
+    //	Padding so tapes in a vector don't interfere
+    char myPad[64];
 
     friend auto setNumResultsForAAD(const bool, const size_t);
     friend struct numResultsResetterForAAD;
-	friend class Number;
+    friend class Number;
 
 public:
-
     //  Build note in place and return a pointer
-	//	N : number of childs (arguments)
+    //	N : number of childs (arguments)
     template <size_t N>
-    Node* recordNode()
+    ADNode *recordADNode()
     {
         //  Construct the node in place on tape
-        Node* node = myNodes.emplace_back(N);
-        
+        ADNode *node = myADNodes.emplace_back(N);
+
         //  Store and zero the adjoint(s)
         if (multi)
         {
-            node->pAdjoints = myAdjointsMulti.emplace_back_multi(Node::numAdj);
-            fill(node->pAdjoints, node->pAdjoints + Node::numAdj, 0.0);
+            node->pAdjoints = myAdjointsMulti.emplace_back_multi(ADNode::numAdj);
+            fill(node->pAdjoints, node->pAdjoints + ADNode::numAdj, 0.0);
         }
 
-		//	Store the derivatives and child adjoint pointers unless leaf
-		if constexpr(N>0)
-		{
-			node->pDerivatives = myDers.emplace_back_multi<N>();
-			node->pAdjPtrs = myArgPtrs.emplace_back_multi<N>();
-
-		}
+        //	Store the derivatives and child adjoint pointers unless leaf
+        if constexpr (N > 0)
+        {
+            node->pDerivatives = myDers.emplace_back_multi<N>();
+            node->pAdjPtrs = myArgPtrs.emplace_back_multi<N>();
+        }
 
         return node;
     }
 
     //  Reset all adjoints to 0
-	void resetAdjoints()
-	{
-		if (multi)
-		{
-			myAdjointsMulti.memset(0);
-		}
-		else
-		{
-			for (Node& node : myNodes)
-			{
-				node.mAdjoint = 0;
-			}
-		}
-	}
+    void resetAdjoints()
+    {
+        if (multi)
+        {
+            myAdjointsMulti.memset(0);
+        }
+        else
+        {
+            for (ADNode &node : myADNodes)
+            {
+                node.mAdjoint = 0;
+            }
+        }
+    }
 
     //  Clear
     void clear()
     {
         myAdjointsMulti.clear();
-		myDers.clear();
-		myArgPtrs.clear();
-        myNodes.clear();
+        myDers.clear();
+        myArgPtrs.clear();
+        myADNodes.clear();
     }
 
     //  Rewind
@@ -116,21 +113,20 @@ public:
         //  In debug mode, always wipe
         //      makes it easier to identify errors
 
-		clear();
+        clear();
 
 #else
         //  In release mode, rewind and reuse
 
-		if (multi)
-		{
-			myAdjointsMulti.rewind();
-		}
-		myDers.rewind();
-		myArgPtrs.rewind();
-		myNodes.rewind();
+        if (multi)
+        {
+            myAdjointsMulti.rewind();
+        }
+        myDers.rewind();
+        myArgPtrs.rewind();
+        myADNodes.rewind();
 
 #endif
-
     }
 
     //  Set mark
@@ -140,9 +136,9 @@ public:
         {
             myAdjointsMulti.setmark();
         }
-		myDers.setmark();
-		myArgPtrs.setmark();
-		myNodes.setmark();
+        myDers.setmark();
+        myArgPtrs.setmark();
+        myADNodes.setmark();
     }
 
     //  Rewind to mark
@@ -152,35 +148,34 @@ public:
         {
             myAdjointsMulti.rewind_to_mark();
         }
-		myDers.rewind_to_mark();
-		myArgPtrs.rewind_to_mark();
-		myNodes.rewind_to_mark();
+        myDers.rewind_to_mark();
+        myArgPtrs.rewind_to_mark();
+        myADNodes.rewind_to_mark();
     }
 
     //  Iterators
-    
-    using iterator = blocklist<Node, BLOCKSIZE>::iterator;
+
+    using iterator = blocklist<ADNode, BLOCKSIZE>::iterator;
 
     auto begin()
     {
-        return myNodes.begin();
+        return myADNodes.begin();
     }
 
     auto end()
     {
-        return myNodes.end();
+        return myADNodes.end();
     }
 
     auto markIt()
     {
-        return myNodes.mark();
+        return myADNodes.mark();
     }
 
-    auto find(Node* node)
+    auto find(ADNode *node)
     {
-        return myNodes.find(node);
+        return myADNodes.find(node);
     }
 };
-
 
 #endif /* FEE08509_4CE4_4ED9_9905_9014AE04FC88 */
