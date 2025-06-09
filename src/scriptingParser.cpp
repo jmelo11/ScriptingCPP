@@ -19,22 +19,22 @@ As long as this comment is preserved at the top of the file
 #include <regex>
 #include <algorithm>
 
-vector<string> tokenize( const string& str)
-{	
+vector<string> tokenize(const string &str)
+{
 	//	Regex matching tokens of interest
-	static const regex r( "[\\w.]+|[/-]|,|;|:|[\\(\\)\\+\\*\\^]|!=|>=|<=|[<>=]");
+	static const regex r("[\\w.]+|[/-]|,|;|:|[\\(\\)\\+\\*\\^]|!=|>=|<=|[<>=]");
 
 	//	Result, with max possible size reserved
 	vector<string> v;
-	v.reserve( str.size());
+	v.reserve(str.size());
 
 	//	Loop over matches
-	for( sregex_iterator it( str.begin(), str.end(), r), end; it != end; ++it)
+	for (sregex_iterator it(str.begin(), str.end(), r), end; it != end; ++it)
 	{
 		//	Copy match into results
-		v.push_back( (*it)[0]);
+		v.push_back((*it)[0]);
 		//	Uppercase
-		transform( v.back().begin(), v.back().end(), v.back().begin(), toupper);
+		std::transform(v.back().begin(), v.back().end(), v.back().begin(), [](unsigned char c) { return std::toupper(c); });
 	}
 
 	//	C++11 move semantics means no copy
@@ -42,16 +42,16 @@ vector<string> tokenize( const string& str)
 }
 
 //	Event = vector<Statement>
-Event parse( const string& eventString)
+Event parse(const string &eventString)
 {
-    Event e;
+	Event e;
 
-	auto tokens = tokenize( eventString);
+	auto tokens = tokenize(eventString);
 
 	auto it = tokens.begin();
-	while( it != tokens.end())
+	while (it != tokens.end())
 	{
-		e.push_back( Parser<decltype(it)>::parseStatement( it, tokens.end()));
+		e.push_back(Parser<decltype(it)>::parseStatement(it, tokens.end()));
 	}
 
 	//	C++11 --> vectors are moved, not copied
@@ -59,9 +59,9 @@ Event parse( const string& eventString)
 }
 
 //	Single expression
-Expression parseExpression(const string& exprString)
+Expression parseExpression(const string &exprString)
 {
-    auto tokens = tokenize(exprString);
-    auto it = tokens.begin();
-    return Parser<decltype(tokens.begin())>::parseStatement(it, tokens.end());
+	auto tokens = tokenize(exprString);
+	auto it = tokens.begin();
+	return Parser<decltype(tokens.begin())>::parseStatement(it, tokens.end());
 }

@@ -4,12 +4,14 @@
 class Debugger;
 class VarIndexer;
 class ConstProcessor;
-template <class T> class Evaluator;
+template <class T>
+class Evaluator;
 class Compiler;
 class ConstCondProcessor;
 class IfProcessor;
 class DomainProcessor;
-template <class T> class FuzzyEvaluator;
+template <class T>
+class FuzzyEvaluator;
 
 //  List
 
@@ -20,7 +22,7 @@ template <class T> class FuzzyEvaluator;
 #define CVISITORS Debugger, Evaluator<double>, Compiler, FuzzyEvaluator<double>
 
 //  All visitors
-#define VISITORS MVISITORS , CVISITORS
+#define VISITORS MVISITORS, CVISITORS
 
 //  Various meta-programming utilities
 
@@ -42,7 +44,7 @@ inline constexpr bool isVisitorConst()
 template <typename V>
 struct hasNonConstVisit
 {
-    template <typename N, void (V::*) (N&) = &V::visit>
+    template <typename N, void (V::*)(N &) = &V::visit>
     static bool constexpr forNodeType()
     {
         return true;
@@ -58,7 +60,7 @@ struct hasNonConstVisit
 template <typename V>
 struct hasConstVisit
 {
-    template <typename N, void (V::*) (const N&) = &V::visit>
+    template <typename N, void (V::*)(const N &) = &V::visit>
     static bool constexpr forNodeType()
     {
         return true;
@@ -71,10 +73,9 @@ struct hasConstVisit
     }
 };
 
-//  Use: hasConstVisit<V>::forNodeType<N>() returns true 
-//      if V declares a method void visit(const N&) 
+//  Use: hasConstVisit<V>::forNodeType<N>() returns true
+//      if V declares a method void visit(const N&)
 //      false otherwise
 //  Everything resolves at compile time
 //  hasNonConstVisit is the same: hasNonConstVisit<V>::forNodeType<N>()
 //      returns true if V declares void visit(N&)
-

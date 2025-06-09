@@ -37,7 +37,7 @@ struct Node : VisitableBase<VISITORS>
 {
     using VisitableBase<VISITORS>::accept;
 
-	vector<ExprTree>	arguments;
+    vector<ExprTree> arguments;
 
     virtual ~Node() {}
 };
@@ -47,79 +47,118 @@ struct Node : VisitableBase<VISITORS>
 //  Nodes that return a number
 struct exprNode : Node
 {
-    bool                isConst = false;
-    double              constVal;
+    bool isConst = false;
+    double constVal;
 };
 
 //  Action nodes
-struct actNode : Node 
-{};
+struct actNode : Node
+{
+};
 
 //  Nodes that return a bool
-struct boolNode : Node 
+struct boolNode : Node
 {
-    bool				alwaysTrue;
-    bool				alwaysFalse;
+    bool alwaysTrue;
+    bool alwaysFalse;
 };
 
 //  All the concrete nodes
 
 //  Binary expressions
 
-struct NodeAdd : Visitable<exprNode, NodeAdd, VISITORS> {};
-struct NodeSub : Visitable<exprNode, NodeSub, VISITORS> {};
-struct NodeMult : Visitable<exprNode, NodeMult, VISITORS> {};
-struct NodeDiv : Visitable<exprNode, NodeDiv, VISITORS> {};
-struct NodePow : Visitable<exprNode, NodePow, VISITORS> {};
-struct NodeMax : Visitable<exprNode, NodeMax, VISITORS> {};
-struct NodeMin : Visitable<exprNode, NodeMin, VISITORS> {};
+struct NodeAdd : Visitable<exprNode, NodeAdd, VISITORS>
+{
+};
+struct NodeSub : Visitable<exprNode, NodeSub, VISITORS>
+{
+};
+struct NodeMult : Visitable<exprNode, NodeMult, VISITORS>
+{
+};
+struct NodeDiv : Visitable<exprNode, NodeDiv, VISITORS>
+{
+};
+struct NodePow : Visitable<exprNode, NodePow, VISITORS>
+{
+};
+struct NodeMax : Visitable<exprNode, NodeMax, VISITORS>
+{
+};
+struct NodeMin : Visitable<exprNode, NodeMin, VISITORS>
+{
+};
 
 //  Unary expressions
 
-struct NodeUplus : Visitable<exprNode, NodeUplus, VISITORS> {};
-struct NodeUminus : Visitable<exprNode, NodeUminus, VISITORS> {};
+struct NodeUplus : Visitable<exprNode, NodeUplus, VISITORS>
+{
+};
+struct NodeUminus : Visitable<exprNode, NodeUminus, VISITORS>
+{
+};
 
 //	Math operators
 
-struct NodeLog : Visitable<exprNode, NodeLog, VISITORS> {};
-struct NodeSqrt : Visitable<exprNode, NodeSqrt, VISITORS> {};
+struct NodeLog : Visitable<exprNode, NodeLog, VISITORS>
+{
+};
+struct NodeSqrt : Visitable<exprNode, NodeSqrt, VISITORS>
+{
+};
 
 //  Multi expressions
 
-struct NodeSmooth : Visitable<exprNode, NodeSmooth, VISITORS> {};
+struct NodeSmooth : Visitable<exprNode, NodeSmooth, VISITORS>
+{
+};
 
 //  Comparisons
 
 struct compNode : boolNode
 {
     //	Fuzzying stuff
-    bool				discrete;	//	Continuous or discrete
-                                    //	Continuous eps
-    double				eps;
+    bool discrete; //	Continuous or discrete
+                   //	Continuous eps
+    double eps;
     //	Discrete butterfly bounds
-    double				lb;
-    double				rb;
+    double lb;
+    double rb;
     //	End of fuzzying stuff
 };
 
-struct NodeEqual : Visitable<compNode, NodeEqual, VISITORS> {};
+struct NodeEqual : Visitable<compNode, NodeEqual, VISITORS>
+{
+};
 
-struct NodeSup : Visitable<compNode, NodeSup, VISITORS> {};
+struct NodeSup : Visitable<compNode, NodeSup, VISITORS>
+{
+};
 
-struct NodeSupEqual : Visitable<compNode, NodeSupEqual, VISITORS> {};
+struct NodeSupEqual : Visitable<compNode, NodeSupEqual, VISITORS>
+{
+};
 
 //	And/or/not
 
-struct NodeAnd : Visitable<boolNode, NodeAnd, VISITORS> {};
+struct NodeAnd : Visitable<boolNode, NodeAnd, VISITORS>
+{
+};
 
-struct NodeOr : Visitable<boolNode, NodeOr, VISITORS> {};
+struct NodeOr : Visitable<boolNode, NodeOr, VISITORS>
+{
+};
 
-struct NodeNot : Visitable<boolNode, NodeNot, VISITORS> {};
+struct NodeNot : Visitable<boolNode, NodeNot, VISITORS>
+{
+};
 
 //  Leaves
 
 //	Market access
-struct NodeSpot : Visitable<exprNode, NodeSpot, VISITORS> {};
+struct NodeSpot : Visitable<exprNode, NodeSpot, VISITORS>
+{
+};
 
 //  Const
 struct NodeConst : Visitable<exprNode, NodeConst, VISITORS>
@@ -156,84 +195,90 @@ struct NodeVar : Visitable<exprNode, NodeVar, VISITORS>
         constVal = 0.0;
     }
 
-    const string		name;
-    size_t			index;
+    const string name;
+    size_t index;
 };
 
 //	Assign, Pays
 
-struct NodeAssign : Visitable<actNode, NodeAssign, VISITORS> {};
+struct NodeAssign : Visitable<actNode, NodeAssign, VISITORS>
+{
+};
 
-struct NodePays : Visitable<actNode, NodePays, VISITORS> {};
+struct NodePays : Visitable<actNode, NodePays, VISITORS>
+{
+};
 
 //	If
 struct NodeIf : Visitable<actNode, NodeIf, VISITORS>
 {
-    int					firstElse;
+    int firstElse;
     //	For fuzzy eval: indices of variables affected in statements, including nested
-    vector<size_t>	    affectedVars;
+    vector<size_t> affectedVars;
     //	Always true/false as per domain processor
-    bool				alwaysTrue;
-    bool				alwaysFalse;
+    bool alwaysTrue;
+    bool alwaysFalse;
 };
 
 //	Collection of statements
-struct NodeCollect : Visitable<actNode, NodeCollect, VISITORS> {};
+struct NodeCollect : Visitable<actNode, NodeCollect, VISITORS>
+{
+};
 
 //	Utilities
 
 //  Downcast Node to concrete type, crashes if used on another Node type
 
-template<class Concrete>
-const Concrete* downcast(const unique_ptr<Node>& node)
+template <class Concrete>
+const Concrete *downcast(const unique_ptr<Node> &node)
 {
-    return static_cast<const Concrete*>(node.get());
+    return static_cast<const Concrete *>(node.get());
 }
 
-template<class Concrete>
-Concrete* downcast(unique_ptr<Node>& node)
+template <class Concrete>
+Concrete *downcast(unique_ptr<Node> &node)
 {
-    return static_cast<Concrete*>(node.get());
+    return static_cast<Concrete *>(node.get());
 }
 
 //  Factories
 
 //  Make concrete node
 template <typename ConcreteNode, typename... Args>
-unique_ptr<ConcreteNode> make_node(Args&&... args)
+unique_ptr<ConcreteNode> make_node(Args &&...args)
 {
     return unique_ptr<ConcreteNode>(new ConcreteNode(forward<Args>(args)...));
 }
 
 //  Same but return as pointer on base
 template <typename ConcreteNode, typename... Args>
-unique_ptr<Node> make_base_node(Args&&... args)
+unique_ptr<Node> make_base_node(Args &&...args)
 {
     return unique_ptr<Node>(new ConcreteNode(forward<Args>(args)...));
 }
 
 //	Build binary concrete, and set its arguments to lhs and rhs
 template <class NodeType>
-unique_ptr<NodeType> make_binary(ExprTree& lhs, ExprTree& rhs)
+unique_ptr<NodeType> make_binary(ExprTree &lhs, ExprTree &rhs)
 {
     auto top = make_node<NodeType>();
     top->arguments.resize(2);
     //	Take ownership of lhs and rhs
-    top->arguments[0] = move(lhs);
-    top->arguments[1] = move(rhs);
+    top->arguments[0] = std::move(lhs);
+    top->arguments[1] = std::move(rhs);
     //	Return
     return top;
 }
 
 //  Same but return as pointer on base
 template <class ConcreteNode>
-ExprTree make_base_binary(ExprTree& lhs, ExprTree& rhs)
+ExprTree make_base_binary(ExprTree &lhs, ExprTree &rhs)
 {
     auto top = make_base_node<ConcreteNode>();
     top->arguments.resize(2);
     //	Take ownership of lhs and rhs
-    top->arguments[0] = move(lhs);
-    top->arguments[1] = move(rhs);
+    top->arguments[0] = std::move(lhs);
+    top->arguments[1] = std::move(rhs);
     //	Return
     return top;
 }

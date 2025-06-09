@@ -1,7 +1,6 @@
 #pragma once
 
 #include "scriptingNodes.h"
-
 #include "scriptingVarIndexer.h"
 #include "scriptingDebugger.h"
 #include "scriptingEvaluator.h"

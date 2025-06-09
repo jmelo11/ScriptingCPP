@@ -6,7 +6,6 @@
 //  Pack<T1, T2, T3, ...>::includes<T>() = true if T is part of T1, T2, T3, ... false otherwise
 //  includes() is resolved at compile time
 
-
 template <typename... Vs>
 struct Pack;
 
@@ -16,22 +15,16 @@ struct Pack<V>
     template <class T>
     static constexpr bool includes()
     {
-        return false;
-    }
-
-    template <>
-    static constexpr bool includes<V>()
-    {
-        return true;
+        return std::is_same_v<T, V>;
     }
 };
 
 template <typename V, typename... Vs>
-struct Pack <V, Vs...>
+struct Pack<V, Vs...>
 {
     template <class T>
     static constexpr bool includes()
     {
-        return Pack<V>::includes<T>() || Pack<Vs...>::includes<T>();
+        return Pack<V>::template includes<T>() || Pack<Vs...>::template includes<T>();
     }
 };
