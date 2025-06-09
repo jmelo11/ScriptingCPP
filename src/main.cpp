@@ -1,8 +1,8 @@
 #include <iostream>
 #include <cstring>
-#include "visitorHeaders.h"
 #include "scriptingParser.h"
 #include "scriptingProduct.h"
+#include "scriptingEvaluator.h"
 
 using Date = int;
 int main()
@@ -16,10 +16,10 @@ int main()
     Debugger d;
     prod.visit(d);
     cout << d.getString() << endl;
-    std::unique_ptr<Scenario<double>> scenario = prod.buildScenario<T>();
-    std::unique_ptr<Evaluator<double>> evaluator = prod.buildEvaluator<T>();
-    prod.evaluate(*scenario, *evaluator);
-    std::vector<double> values = evaluator->varVals();
+    std::unique_ptr<Scenario<double>> scenario = prod.buildScenario<double>();
+    Evaluator<double> evaluator = prod.buildEvaluator<double>();
+    prod.evaluate(*scenario, evaluator);
+    std::vector<double> values = evaluator.varVals();
     std::vector<string> var_names = prod.varNames();
     for (size_t i = 0; i < values.size(); i++)
     {

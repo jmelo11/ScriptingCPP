@@ -34,7 +34,8 @@ vector<string> tokenize(const string &str)
 		//	Copy match into results
 		v.push_back((*it)[0]);
 		//	Uppercase
-		std::transform(v.back().begin(), v.back().end(), v.back().begin(), [](unsigned char c) { return std::toupper(c); });
+		std::transform(v.back().begin(), v.back().end(), v.back().begin(), [](unsigned char c)
+					   { return std::toupper(c); });
 	}
 
 	//	C++11 move semantics means no copy
