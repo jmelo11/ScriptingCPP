@@ -8,6 +8,14 @@ file(GLOB SOURCES
     "src/*.cpp"
 )
 
+if(NOT WIN32)
+    list(REMOVE_ITEM SOURCES
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/xlApi.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/xlExport.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/xlcall.cpp
+    )
+endif()
+
 file(GLOB HEADERS "include/*.h")
 
 add_executable(scripting_test ${SOURCES} ${HEADERS})
