@@ -10,7 +10,7 @@
 //
 ///***************************************************************************
 
-#include <windows.h>
+#include "platform.h"
 
 //
 // Total amount of memory to allocate for all temporary XLOPERs

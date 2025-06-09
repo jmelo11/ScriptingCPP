@@ -1,6 +1,6 @@
 #include <wchar.h>
 
-#include "memorymanager.h"
+#include "MemoryManager.h"
 
 extern "C" LPSTR cdecl GetTempMemory(int cBytes)
 {

@@ -269,17 +269,17 @@ class Parser
 	}
 
 	static Expression parseConst( TokIt& cur)
-	{
-		//	Convert to double
-		double v = stod( *cur);
+        {
+                //      Convert to double
+                double v = stod( *cur);
 
-		//	Build the const node
-		auto top = make_node<NodeConst>(v);
+                //      Build the const node
+                auto top = make_base_node<NodeConst>(v);
 
-		//	Advance over var and return
-		++cur;
-		return move( top); // Explicit move is necessary because we return a base class pointer
-	}
+                //      Advance over var and return
+                ++cur;
+                return top;
+        }
 
 	static vector<Expression> parseFuncArg( TokIt& cur, const TokIt end)
 	{
@@ -313,11 +313,11 @@ class Parser
 			throw script_error( (string( "Variable name ") + *cur + " is invalid").c_str());
 
 		//	Build the var node
-		auto top = make_node<NodeVar>(*cur);
+		auto top = make_base_node<NodeVar>(*cur);
 
-		//	Advance over var and return
-		++cur;
-		return move( top); // Explicit move is necessary because we return a base class pointer
+                //      Advance over var and return
+                ++cur;
+                return top;
 	}
 
 	//	Conditions
@@ -399,7 +399,7 @@ class Parser
 	static Expression buildEqual(Expression& lhs, Expression& rhs, const double eps)
 	{
 		auto expr = make_base_binary<NodeSub>( lhs,rhs);
-		auto top = make_node<NodeEqual>();
+		auto top = make_base_node<NodeEqual>();
 		top->arguments.resize( 1);
 		top->arguments[0] = move( expr);
 		top->eps = eps;
@@ -416,7 +416,7 @@ class Parser
 	static Expression buildSuperior(Expression& lhs, Expression& rhs, const double eps)
 	{
 		auto expr = make_base_binary<NodeSub>( lhs,rhs);
-		auto top = make_node<NodeSup>();
+		auto top = make_base_node<NodeSup>();
 		top->arguments.resize( 1);
 		top->arguments[0] = move( expr);
 		top->eps = eps;
@@ -425,7 +425,7 @@ class Parser
 	static Expression buildSupEqual(Expression& lhs, Expression& rhs, const double eps)
 	{
 		auto expr = make_base_binary<NodeSub>( lhs,rhs);
-		auto top = make_node<NodeSupEqual>();
+		auto top = make_base_node<NodeSupEqual>();
 		top->arguments.resize( 1);
 		top->arguments[0] = move( expr);
 		top->eps = eps;
@@ -512,7 +512,7 @@ class Parser
 		}
 
 		//	Finally build the top node
-		auto top = make_node<NodeIf>();
+		auto top = make_base_node<NodeIf>();
 		top->arguments.resize( 1 + stats.size() + elseStats.size());
 		top->arguments[0] = move( cond);			//	Arg[0] = condition
 		for( size_t i=0; i<stats.size(); ++i)		//	Copy statements, Arg[1..n-1]
