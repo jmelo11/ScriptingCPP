@@ -22,6 +22,7 @@ As long as this comment is preserved at the top of the file
 //  The custom number type
 
 #include <algorithm>
+#include <ostream>
 #include "AADTape.h"
 #include "gaussians.h"
 
@@ -666,3 +667,9 @@ public:
         return lhs >= rhs.value();
     }
 };
+
+inline std::ostream &operator<<(std::ostream &os, const Number &n)
+{
+    os << n.value();
+    return os;
+}

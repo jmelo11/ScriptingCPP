@@ -1,5 +1,5 @@
 #pragma warning(disable:4786)
-#include "XlApi.h"
+#include "xlApi.h"
 
 #include <iostream>
 #include <stdlib.h>

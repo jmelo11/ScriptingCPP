@@ -10,6 +10,8 @@ class Compiler;
 class ConstCondProcessor;
 class IfProcessor;
 class DomainProcessor;
+#include "AADNumber.h"
+
 template <class T>
 class FuzzyEvaluator;
 
@@ -19,7 +21,7 @@ class FuzzyEvaluator;
 #define MVISITORS VarIndexer, ConstProcessor, ConstCondProcessor, IfProcessor, DomainProcessor
 
 //  Const visitors
-#define CVISITORS Debugger, Evaluator<double>, Compiler, FuzzyEvaluator<double>
+#define CVISITORS Debugger, Evaluator<double>, Evaluator<Number>, Compiler, FuzzyEvaluator<double>
 
 //  All visitors
 #define VISITORS MVISITORS, CVISITORS
