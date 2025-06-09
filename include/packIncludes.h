@@ -11,7 +11,7 @@ template <typename... Vs>
 struct Pack;
 
 template <typename V>
-struct Pack <typename V>
+struct Pack<V>
 {
     template <class T>
     static constexpr bool includes()
