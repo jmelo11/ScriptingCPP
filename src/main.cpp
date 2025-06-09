@@ -8,17 +8,21 @@
 using Date = int;
 int main()
 {
-    string s = "X = 3";
+    Tape tape;
+    Number::tape = &tape;
+
     Date today = 1;
-    map<Date, string> mapping = {{today, s}};
+    std::map<Date, string> mapping = {{today, "x=0"}, {today + 1, "y=0"}, {today + 2, "if x > 0 then y=1 else y=0 endif"}};
+
     Product prod;
     prod.parseEvents(mapping.begin(), mapping.end());
-    prod.indexVariables();
+    prod.preProcess(true, false);
     Debugger d;
     prod.visit(d);
     cout << d.getString() << endl;
     std::unique_ptr<Scenario<Number>> scenario = prod.buildScenario<Number>();
-    Evaluator<Number> evaluator = prod.buildEvaluator<Number>();
+    FuzzyEvaluator<Number> evaluator = prod.buildFuzzyEvaluator<Number>(prod.ifProcess(), 1);
+
     prod.evaluate(*scenario, evaluator);
     std::vector<Number> values = evaluator.varVals();
     std::vector<string> var_names = prod.varNames();
@@ -26,4 +30,8 @@ int main()
     {
         cout << var_names[i] << ": " << values[i] << endl;
     };
+
+    values.back().propagateToStart();
+
+    cout << values[0].adjoint() << endl;
 }
