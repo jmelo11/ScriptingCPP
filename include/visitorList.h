@@ -21,7 +21,7 @@ class FuzzyEvaluator;
 #define MVISITORS VarIndexer, ConstProcessor, ConstCondProcessor, IfProcessor, DomainProcessor
 
 //  Const visitors
-#define CVISITORS Debugger, Evaluator<double>, Evaluator<Number>, Compiler, FuzzyEvaluator<double>
+#define CVISITORS Debugger, Evaluator<double>, Evaluator<Number>, Compiler, FuzzyEvaluator<double>, FuzzyEvaluator<Number>
 
 //  All visitors
 #define VISITORS MVISITORS, CVISITORS

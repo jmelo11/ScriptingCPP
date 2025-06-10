@@ -57,17 +57,17 @@ class FuzzyEvaluator : public EvaluatorBase<T, FuzzyEvaluator>
 	{
 		const double halfEps = 0.5 * eps;
 
-		if (x < - halfEps) return 0.0;
-		else if (x > halfEps) return 1.0;
-		else return (x + halfEps) / eps;
+                if (x < - halfEps) return T(0.0);
+                else if (x > halfEps) return T(1.0);
+                else return (x + halfEps) / eps;
 	}
 
 	//	Call Spread (lb,rb)
 	static T cSpr( const T x, const double lb, const double rb)
 	{
-		if (x < lb) return 0.0;
-		else if (x > rb) return 1.0;
-		else return (x - lb) / (rb - lb);
+                if (x < lb) return T(0.0);
+                else if (x > rb) return T(1.0);
+                else return (x - lb) / (rb - lb);
 	}
 
 	//	Butterfly (-eps/2,+eps/2)
@@ -75,16 +75,16 @@ class FuzzyEvaluator : public EvaluatorBase<T, FuzzyEvaluator>
 	{
 		const double halfEps = 0.5 * eps;
 
-		if (x < - halfEps || x > halfEps) return 0.0;
-		else return ( halfEps - std::fabs( x)) / halfEps;
+                if (x < - halfEps || x > halfEps) return T(0.0);
+                else return ( halfEps - fabs( x)) / halfEps;
 	}
 
 	//	Butterfly (lb,0,rb)
 	static T bFly( const T x, const double lb, const double rb)
 	{
-		if( x < lb || x > rb) return 0.0;
-		else if( x < 0.0) return 1.0 - x / lb;
-		else return 1.0 - x / rb;
+                if( x < lb || x > rb) return T(0.0);
+                else if( x < T(0.0)) return T(1.0) - x / lb;
+                else return T(1.0) - x / rb;
 	}
 
 public:
@@ -195,7 +195,7 @@ public:
 				for( size_t i=node.firstElse; i<node.arguments.size(); ++i) 		visitNode(*node.arguments[i]);
 
 			//	Set values of variables to fuzzy values
-			for( auto idx : node.affectedVars) myVariables[idx] = dt * myVarStore1[myNestedIfLvl-1][idx] + (1.0-dt) * myVariables[idx];
+                        for( auto idx : node.affectedVars) myVariables[idx] = dt * myVarStore1[myNestedIfLvl-1][idx] + (T(1.0)-dt) * myVariables[idx];
 		}
 	
 		//	Decrease nested if level
@@ -206,11 +206,11 @@ public:
 	
 	void visit(const NodeTrue& node)
 	{
-		myFuzzyStack.push( 1.0);
+                myFuzzyStack.push( T(1.0));
 	}
 	void visit(const NodeFalse& node)
 	{
-		myFuzzyStack.push( 0.0);
+                myFuzzyStack.push( T(0.0));
 	}
 
 	//	Equality
@@ -281,7 +281,7 @@ public:
 	void visitNot(const NodeNot& node)
 	{
         visitNode(*node.arguments[0]);
-        myFuzzyStack.top() = 1.0 - myFuzzyStack.top();
+        myFuzzyStack.top() = T(1.0) - myFuzzyStack.top();
 	}
 
 	//	Combinators
