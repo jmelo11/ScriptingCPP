@@ -295,8 +295,8 @@ public:
 		myDstack.pop();
 	}
 
-	void visit(const NodePays& node)
-	{
+        void visit(const NodePays& node)
+        {
         const auto varIdx = downcast<NodeVar>(node.arguments[0])->index;
 
         //	Visit the RHS expression
@@ -305,7 +305,23 @@ public:
         //	Write result into variable
         myVariables[varIdx] += myDstack.top() / (*myScenario)[myCurEvt].numeraire;
         myDstack.pop();
-	}
+        }
+
+        void visit(const NodeFor& node)
+        {
+        const auto varIdx = downcast<NodeVar>(node.arguments[0])->index;
+        const NodeList* lst = downcast<NodeList>(node.arguments[1]);
+        for(const auto& valExpr : lst->arguments)
+        {
+            visitNode(*valExpr);
+            myVariables[varIdx] = myDstack.top();
+            myDstack.pop();
+            for(size_t i=2;i<node.arguments.size();++i)
+            {
+                visitNode(*node.arguments[i]);
+            }
+        }
+        }
 
 	//	Variables and constants
 	void visit(const NodeVar& node)
