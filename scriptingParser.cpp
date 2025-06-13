@@ -22,7 +22,7 @@ As long as this comment is preserved at the top of the file
 vector<string> tokenize( const string& str)
 {	
 	//	Regex matching tokens of interest
-	static const regex r( "[\\w.]+|[/-]|,|;|:|[\\(\\)\\+\\*\\^]|!=|>=|<=|[<>=]");
+        static const regex r( "[\\w.]+|[/-]|,|;|:|[\\(\\)\\[\\]\\+\\*\\^]|!=|>=|<=|[<>=]");
 
 	//	Result, with max possible size reserved
 	vector<string> v;

@@ -88,6 +88,9 @@ struct NodeSqrt : Visitable<exprNode, NodeSqrt, VISITORS> {};
 
 struct NodeSmooth : Visitable<exprNode, NodeSmooth, VISITORS> {};
 
+//  Lists of expressions
+struct NodeList : Visitable<exprNode, NodeList, VISITORS> {};
+
 //  Comparisons
 
 struct compNode : boolNode
@@ -176,6 +179,9 @@ struct NodeIf : Visitable<actNode, NodeIf, VISITORS>
     bool				alwaysTrue;
     bool				alwaysFalse;
 };
+//      For loops
+struct NodeFor : Visitable<actNode, NodeFor, VISITORS> {};
+
 
 //	Collection of statements
 struct NodeCollect : Visitable<actNode, NodeCollect, VISITORS> {};

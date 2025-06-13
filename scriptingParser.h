@@ -211,6 +211,12 @@ class Parser
 		{
 			return parseConst( cur);
 		}
+                //      Lists
+                if( *cur == "[")
+                {
+                        return parseList(cur, end);
+                }
+
 
 		//	Check for functions, including those for accessing simulated data
         Expression top;
@@ -280,6 +286,24 @@ class Parser
                 ++cur;
                 return top;
         }
+        static Expression parseList(TokIt& cur, const TokIt end)
+        {
+                TokIt closeIt = findMatch<'[',']'>(cur, end);
+                vector<Expression> vals;
+                ++cur;
+                while(cur != closeIt)
+                {
+                        vals.push_back(parseExpr(cur, end));
+                        if(*cur == ",") ++cur;
+                        else if(cur != closeIt)
+                                throw script_error("List elements must be separated by commas");
+                }
+                cur = ++closeIt;
+                auto top = make_base_node<NodeList>();
+                top->arguments = move(vals);
+                return top;
+        }
+
 
 	static vector<Expression> parseFuncArg( TokIt& cur, const TokIt end)
 	{
@@ -555,6 +579,28 @@ class Parser
 		//	Build and return the top node
 		return make_base_binary<NodePays>( lhs, rhs);
 	}
+        static Statement parseFor( TokIt& cur, const TokIt end)
+        {
+                ++cur;
+                if(cur==end) throw script_error("'for' must be followed by variable");
+                auto var = parseVar(cur);
+                if(cur==end || *cur != "IN") throw script_error("'for' must be followed by 'in'");
+                ++cur;
+                auto lst = parseExpr(cur, end);
+                if(cur==end || *cur != "THEN") throw script_error("'for' is not followed by 'then'");
+                ++cur;
+                vector<Statement> stats;
+                while(cur!=end && *cur != "ENDFOR") stats.push_back(parseStatement(cur,end));
+                if(cur==end) throw script_error("'for' has no matching 'endFor'");
+                auto top = make_base_node<NodeFor>();
+                top->arguments.resize(2+stats.size());
+                top->arguments[0] = move(var);
+                top->arguments[1] = move(lst);
+                for(size_t i=0;i<stats.size();++i) top->arguments[i+2] = move(stats[i]);
+                ++cur;
+                return move(top);
+        }
+
 
 public:
 
@@ -566,8 +612,9 @@ public:
 	//	Statement = unique_ptr<Node>
 	static Statement parseStatement( TokIt& cur, const TokIt end)
 	{
-		//	Check for instructions of type 1, so far only 'if'
-		if( *cur == "IF") return parseIf( cur, end);
+                //      Check for instructions of type 1, 'if' or 'for'
+                if( *cur == "IF") return parseIf( cur, end);
+                if( *cur == "FOR") return parseFor( cur, end);
 
 		//	Parse cur as a variable
 		auto lhs = parseVar( cur);
