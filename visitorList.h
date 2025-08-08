@@ -3,21 +3,20 @@
 //  Declaration of all visitors
 class Debugger;
 class VarIndexer;
-class ConstProcessor;
 template <class T> class Evaluator;
-class Compiler;
 class ConstCondProcessor;
 class IfProcessor;
 class DomainProcessor;
 template <class T> class FuzzyEvaluator;
+class Number;
 
 //  List
 
 //  Modifying visitors
-#define MVISITORS VarIndexer
+#define MVISITORS VarIndexer , IfProcessor , DomainProcessor , ConstCondProcessor
 
 //  Const visitors
-#define CVISITORS Evaluator<double>
+#define CVISITORS Evaluator<double> , Debugger , FuzzyEvaluator<double> , FuzzyEvaluator<Number>
 
 //  All visitors
 #define VISITORS MVISITORS , CVISITORS

@@ -167,24 +167,6 @@ public:
 		}
 	}
 
-    //	Evaluate all compiled statements in all events
-    //  The product must be pre-processed and compiled first
-    template <class T>
-    void evaluateCompiled(
-        const Scenario<T>& scen, 
-        EvalState<T>& state) const
-    {
-        //	Initialize state
-        state.init();
-
-        //	Loop over events
-        for (size_t i = 0; i<myEvents.size(); ++i)
-        {
-            //	Evaluate the compiled events
-            evalCompiled(myNodeStreams[i], myConstStreams[i], myDataStreams[i], scen[i], state);
-        }
-    }
-    
     //  Processors
 
     //	Index all variables
@@ -222,72 +204,18 @@ public:
 		//	Visit
 		visit( domProc);
 	}
-
-    //  Const process, identify (but not remove) all constant nodes
-    void constProcess()
+    //  Const condition process, remove all conditions that are always true or always false
+    void constCondProcess()
     {
-        ConstProcessor cProc( myVariables.size());
-
-        //	Visit
-        visit(cProc);
-    }
-
-	//	Const condition process, remove all conditions that are always true or always false
-	void constCondProcess()
-	{
-		//	The const cond processor
-		ConstCondProcessor ccProc;
-
-		//	Visit
-		//	Note that changes the structure of the tree, hence a special function must be called 
-		//		from the top of each tree
-		//	Loop over events
-		for( auto& evt : myEvents)
-		{
-			//	Loop over statements in event
-			for( auto& stat : evt)
-			{
-				//	Visit statement
-				ccProc.processFromTop( stat);
-			}
-		}
-	}
-
-    //	Compile into streams of instructions, constants and data, one per event date
-    void compile()
-    {
-        //  First, identify constants
-        constProcess();
-
-        //  Clear
-        myNodeStreams.clear();
-        myConstStreams.clear();
-        myDataStreams.clear();
-        
-        //  One per event date
-        myNodeStreams.reserve(myEvents.size());
-        myConstStreams.reserve(myEvents.size());
-        myDataStreams.reserve(myEvents.size());
-
-        //	Visit
+        ConstCondProcessor ccProc;
         for (auto& evt : myEvents)
-        {
-            //	The compiler
-            Compiler comp;
-
-            //	Loop over statements in event
             for (auto& stat : evt)
-            {
-                //	Visit statement
-                stat->accept(comp);
-            }
-
-            //  Get compiled 
-            myNodeStreams.push_back(comp.nodeStream());
-            myConstStreams.push_back(comp.constStream());
-            myDataStreams.push_back(comp.dataStream());
-        }
+                ccProc.processFromTop(stat);
     }
+
+    //  Stubbed out const and compile processes (not needed for evaluation tests)
+    void constProcess() {}
+    void compile() {}
 
 	//	All preprocessing
 	size_t preProcess( const bool fuzzy, const bool skipDoms)
