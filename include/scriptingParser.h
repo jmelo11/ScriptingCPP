@@ -1,4 +1,3 @@
-
 /*
 Written by Antoine Savine in 2018
 
@@ -23,11 +22,58 @@ using namespace std;
 
 #include <regex>
 #include <algorithm>
+#include <variant>
 #include "scriptingNodes.h"
 #include "visitorHeaders.h"
 
+//  Token definition using variants
+struct Token
+{
+    enum class Type
+    {
+        Identifier,
+        Number,
+        Symbol,
+        Keyword
+    };
+
+    std::variant<char, double, std::string> data;
+    Type type;
+
+    Token(char c) : data(c), type(Type::Symbol) {}
+    Token(double v) : data(v), type(Type::Number) {}
+    Token(std::string s, Type t) : data(std::move(s)), type(t) {}
+
+    std::string str() const
+    {
+        switch (type)
+        {
+        case Type::Number:
+            return std::to_string(std::get<double>(data));
+        case Type::Symbol:
+            return std::string(1, std::get<char>(data));
+        default:
+            return std::get<std::string>(data);
+        }
+    }
+
+    double number() const { return std::get<double>(data); }
+
+    char operator[](size_t i) const { return str()[i]; }
+};
+
+inline bool operator==(const Token &t, const char *s) { return t.str() == s; }
+inline bool operator==(const Token &t, const std::string &s) { return t.str() == s; }
+inline bool operator==(const Token &t, char c)
+{
+    if (t.type == Token::Type::Symbol)
+        return std::get<char>(t.data) == c;
+    auto s = t.str();
+    return s.size() == 1 && s[0] == c;
+}
+
 Event parse(const string &eventString);
-vector<string> tokenize(const string &str);
+vector<Token> tokenize(const string &str);
 
 struct script_error : public runtime_error
 {
@@ -216,6 +262,14 @@ class Parser
 			return parseConst(cur);
 		}
 
+		//      Arrays
+		if (*cur == "[")
+		{
+			return parseArray(cur, end);
+		}
+
+		
+
 		//	Check for functions, including those for accessing simulated data
 		Expression top;
 		unsigned minArg, maxArg;
@@ -256,7 +310,7 @@ class Parser
 
 		if (top)
 		{
-			string func = *cur;
+			string func = cur->str();
 			++cur;
 
 			//	Matched a function, parse its arguments and check
@@ -275,7 +329,7 @@ class Parser
 	static Expression parseConst(TokIt &cur)
 	{
 		//	Convert to double
-		double v = stod(*cur);
+		double v = cur->number();
 
 		//	Build the const node
 		auto top = make_node<NodeConst>(v);
@@ -284,6 +338,30 @@ class Parser
 		++cur;
 		return std::move(top); // Explicit std::move is necessary because we return a base class pointer
 	}
+	static Expression parseArray(TokIt &cur, const TokIt end)
+	{
+		if ((*cur)[0] != '[')
+			throw script_error("No opening [ for array");
+
+		TokIt closeIt = findMatch<'[', ']'>(cur, end);
+
+		vector<Expression> elems;
+		++cur; // over '['
+		while (cur != closeIt)
+		{
+			elems.push_back(parseExpr(cur, end));
+			if ((*cur)[0] == ',')
+				++cur;
+			else if (cur != closeIt)
+				throw script_error("Elements must be separated by commas");
+		}
+
+		cur = ++closeIt;
+		auto top = make_base_node<NodeArray>();
+		top->arguments = std::move(elems);
+		return top;
+	}
+
 
 	static vector<Expression> parseFuncArg(TokIt &cur, const TokIt end)
 	{
@@ -315,10 +393,10 @@ class Parser
 	{
 		//	Check that the variable name starts with a letter
 		if ((*cur)[0] < 'A' || (*cur)[0] > 'Z')
-			throw script_error((string("Variable name ") + *cur + " is invalid").c_str());
+			throw script_error((string("Variable name ") + cur->str() + " is invalid").c_str());
 
 		//	Build the var node
-		auto top = make_node<NodeVar>(*cur);
+		auto top = make_node<NodeVar>(cur->str());
 
 		//	Advance over var and return
 		++cur;
@@ -381,27 +459,29 @@ class Parser
 		return lhs;
 	}
 
-	//	Helper function that parses the optional fuzzy parameters for conditions
-	static void parseCondOptionals(TokIt &cur, const TokIt end, double &eps)
-	{
-		//	Default
-		eps = -1.0;
+        static void parseCondOptionals(TokIt &cur, const TokIt end, double &eps)
+        {
+                //      Default
+                eps = -1.0;
 
-		while (*cur == ";" || *cur == ":")
-		{
-			//	Record
-			const char c = (*cur)[0];
-			//	Over ;:
-			++cur;
-			//	Check for end
-			if (cur == end)
-				throw script_error("Unexpected end of expression");
-
-			//	Eps
-			eps = stod(*cur);
-			++cur;
-		}
-	}
+                TokIt next;
+                while ((*cur == ";" || *cur == ":"))
+                {
+                        next = cur; ++next;
+                        if (next == end || next->type != Token::Type::Number)
+                                break;
+                        //      Record
+                        const char c = (*cur)[0];
+                        //      Over ;:
+                        ++cur;
+                        //      Check for end
+                        if (cur == end)
+                                throw script_error("Unexpected end of expression");
+                        //      Eps
+                        eps = cur->number();
+                        ++cur;
+                }
+        }
 
 	//	Helpers for elementary conditions
 	static Expression buildEqual(Expression &lhs, Expression &rhs, const double eps)
@@ -451,7 +531,7 @@ class Parser
 			throw script_error("Unexpected end of expression");
 
 		//	Advance to token immediately following the comparator
-		string comparator = *cur;
+		string comparator = cur->str();
 		++cur;
 
 		//	Check for end
@@ -485,65 +565,121 @@ class Parser
 	//	Statements
 
 	static Statement parseIf(TokIt &cur, const TokIt end)
-	{
-		//	Advance to token immediately following "if"
-		++cur;
+        {
+                //      Advance to token immediately following "if"
+                ++cur;
 
-		//	Check for end
-		if (cur == end)
-			throw script_error("'If' is not followed by 'then'");
+                //      Check for end
+                if (cur == end)
+                        throw script_error("'If' is not followed by condition");
 
-		//	Parse the condition
-		auto cond = parseCond(cur, end);
+                //      Parse the condition
+                auto cond = parseCond(cur, end);
 
-		//	Check that the next token is "then"
-		if (cur == end || *cur != "THEN")
-			throw script_error("'If' is not followed by 'then'");
+                //      Expect ':' after condition
+                if (cur == end || *cur != ":")
+                        throw script_error("'If' is not followed by ':'");
 
-		//	Advance over "then"
-		++cur;
+                ++cur;
 
-		//	Parse statements until we hit "else" or "endIf"
-		vector<Statement> stats;
-		while (cur != end && *cur != "ELSE" && *cur != "ENDIF")
-			stats.push_back(parseStatement(cur, end));
+                //      Parse statements until we hit "else" or "end"
+                vector<Statement> stats;
+                while (cur != end && *cur != "ELSE" && *cur != "END")
+                        stats.push_back(parseStatement(cur, end));
 
-		//	Check
-		if (cur == end)
-			throw script_error("'If/then' is not followed by 'else' or 'endIf'");
+                if (cur == end)
+                        throw script_error("'If' without 'end'");
 
-		//	Else: parse the else statements
-		vector<Statement> elseStats;
-		int elseIdx = -1;
-		if (*cur == "ELSE")
-		{
-			//	Advance over "else"
-			++cur;
-			//	Parse statements until we hit "endIf"
-			while (cur != end && *cur != "ENDIF")
-				elseStats.push_back(parseStatement(cur, end));
-			if (cur == end)
-				throw script_error("'If/then/else' is not followed by 'endIf'");
-			//	Record else index
-			elseIdx = int(stats.size()) + 1;
-		}
+                vector<Statement> elseStats;
+                int elseIdx = -1;
+                if (*cur == "ELSE")
+                {
+                        ++cur;
+                        if (cur == end || *cur != ":")
+                                throw script_error("'Else' is not followed by ':'");
+                        ++cur;
+                        while (cur != end && *cur != "END")
+                                elseStats.push_back(parseStatement(cur, end));
+                        if (cur == end)
+                                throw script_error("'If/else' without 'end'");
+                        elseIdx = int(stats.size()) + 1;
+                }
 
-		//	Finally build the top node
-		auto top = make_node<NodeIf>();
-		top->arguments.resize(1 + stats.size() + elseStats.size());
-		top->arguments[0] = std::move(cond);	  //	Arg[0] = condition
-		for (size_t i = 0; i < stats.size(); ++i) //	Copy statements, Arg[1..n-1]
-			top->arguments[i + 1] = std::move(stats[i]);
-		for (size_t i = 0; i < elseStats.size(); ++i) //	Copy else statements, Arg[n..N]
-			top->arguments[i + elseIdx] = std::move(elseStats[i]);
-		top->firstElse = elseIdx;
+                auto top = make_node<NodeIf>();
+                top->arguments.resize(1 + stats.size() + elseStats.size());
+                top->arguments[0] = std::move(cond);      //    Arg[0] = condition
+                for (size_t i = 0; i < stats.size(); ++i) //    Copy statements, Arg[1..n-1]
+                        top->arguments[i + 1] = std::move(stats[i]);
+                for (size_t i = 0; i < elseStats.size(); ++i) //        Copy else statements, Arg[n..N]
+                        top->arguments[i + elseIdx] = std::move(elseStats[i]);
+                top->firstElse = elseIdx;
 
-		//	Advance over endIf and return
-		++cur;
-		return std::move(top); // Explicit std::move is necessary because we return a base class pointer
-	}
+                //      Advance over end and return
+                ++cur;
+                return std::move(top); // Explicit std::move is necessary because we return a base class pointer
+        }
 
-	static Statement parseAssign(TokIt &cur, const TokIt end, Expression &lhs)
+        static Statement parseFor(TokIt &cur, const TokIt end)
+        {
+                ++cur; // after FOR
+                if (cur == end)
+                        throw script_error("'for' without variable");
+                string loopVar = cur->str();
+                ++cur;
+                bool iteratorBased = true;
+                Expression first, second;
+                if (cur != end && *cur == "IN")
+                {
+                        ++cur;
+                        first = parseExpr(cur, end);
+                }
+                else if (cur != end && *cur == "=")
+                {
+                        ++cur;
+                        first = parseExpr(cur, end);
+                        if (cur == end || *cur != "TO")
+                                throw script_error("'for' missing 'to'");
+                        ++cur;
+                        second = parseExpr(cur, end);
+                        iteratorBased = false;
+                }
+                else
+                        throw script_error("Malformed for loop");
+
+                if (cur == end || *cur != ":")
+                        throw script_error("'for' is not followed by ':'");
+                ++cur;
+
+                vector<Statement> stats;
+                while (cur != end && *cur != "END")
+                        stats.push_back(parseStatement(cur, end));
+                if (cur == end)
+                        throw script_error("'for' without 'end'");
+
+                auto top = make_node<NodeFor>();
+                top->iteratorBased = iteratorBased;
+                top->loopVar = loopVar;
+                if (iteratorBased)
+                {
+                        top->arguments.resize(1 + stats.size());
+                        top->arguments[0] = std::move(first);
+                        for (size_t i = 0; i < stats.size(); ++i)
+                                top->arguments[i + 1] = std::move(stats[i]);
+                }
+                else
+                {
+                        top->arguments.resize(2 + stats.size());
+                        top->arguments[0] = std::move(first);
+                        top->arguments[1] = std::move(second);
+                        for (size_t i = 0; i < stats.size(); ++i)
+                                top->arguments[i + 2] = std::move(stats[i]);
+                }
+
+                ++cur;
+                return top;
+        }
+
+        static Statement parseAssign(TokIt &cur, const TokIt end, Expression &lhs)
 	{
 		//	Advance to token immediately following "="
 		++cur;
@@ -582,27 +718,29 @@ public:
 	}
 
 	//	Statement = unique_ptr<Node>
-	static Statement parseStatement(TokIt &cur, const TokIt end)
-	{
-		//	Check for instructions of type 1, so far only 'if'
-		if (*cur == "IF")
-			return parseIf(cur, end);
+static Statement parseStatement(TokIt &cur, const TokIt end)
+        {
+                //      Check for instructions of type 1, so far only 'if' and 'for'
+                if (*cur == "IF")
+                        return parseIf(cur, end);
+                if (*cur == "FOR")
+                        return parseFor(cur, end);
 
-		//	Parse cur as a variable
-		auto lhs = parseVar(cur);
+                //      Parse cur as a variable
+                auto lhs = parseVar(cur);
 
-		//	Check for end
-		if (cur == end)
-			throw script_error("Unexpected end of statement");
+                //      Check for end
+                if (cur == end)
+                        throw script_error("Unexpected end of statement");
 
-		//	Check for instructions of type 2, so far only assignment
-		if (*cur == "=")
-			return parseAssign(cur, end, lhs);
-		else if (*cur == "PAYS")
-			return parsePays(cur, end, lhs);
+                //      Check for instructions of type 2, so far only assignment
+                if (*cur == "=")
+                        return parseAssign(cur, end, lhs);
+                else if (*cur == "PAYS")
+                        return parsePays(cur, end, lhs);
 
-		//	No instruction, error
-		throw script_error("Statement without an instruction");
-		return Statement();
-	}
+                //      No instruction, error
+                throw script_error("Statement without an instruction");
+                return Statement();
+        }
 };

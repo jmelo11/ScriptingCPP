@@ -12,7 +12,7 @@ int main()
     Number::tape = &tape;
 
     Date today = 1;
-    std::map<Date, string> mapping = {{today, "x=0"}, {today + 1, "y=0"}, {today + 2, "if x > 0 then y=1 else y=0 endif"}};
+    std::map<Date, string> mapping = {{today, "x = 0"}, {today + 1, "y = 0"}, {today + 2, "if x > 0: y = 1 else: y = 0 end"}};
 
     Product prod;
     prod.parseEvents(mapping.begin(), mapping.end());
