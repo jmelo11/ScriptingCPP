@@ -18,6 +18,7 @@ As long as this comment is preserved at the top of the file
 
 using namespace std;
 
+#include <string>
 #include <vector>
 #include <memory>
 
@@ -110,6 +111,11 @@ struct NodeSqrt : Visitable<exprNode, NodeSqrt, VISITORS>
 //  Multi expressions
 
 struct NodeSmooth : Visitable<exprNode, NodeSmooth, VISITORS>
+{
+};
+
+//  Arrays
+struct NodeArray : Visitable<exprNode, NodeArray, VISITORS>
 {
 };
 
@@ -223,6 +229,14 @@ struct NodeIf : Visitable<actNode, NodeIf, VISITORS>
 //	Collection of statements
 struct NodeCollect : Visitable<actNode, NodeCollect, VISITORS>
 {
+};
+
+//      For loops
+struct NodeFor : Visitable<actNode, NodeFor, VISITORS>
+{
+    bool iteratorBased; // true for iterator based "for in" loops
+    string loopVar;     // name of the loop variable
+    NodeFor() : iteratorBased(true) {}
 };
 
 //	Utilities

@@ -1,68 +1,89 @@
 
-/*
-Written by Antoine Savine in 2018
-
-This code is the strict IP of Antoine Savine
-
-License to use and alter this code for personal and commercial applications
-is freely granted to any person or company who purchased a copy of the book
-
-Modern Computational Finance: Scripting for Derivatives and XVA
-Jesper Andreasen & Antoine Savine
-Wiley, 2018
-
-As long as this comment is preserved at the top of the file
-*/
-
 #include "scriptingParser.h"
 
-#include <regex>
 #include <algorithm>
+#include <cctype>
 
-vector<string> tokenize(const string &str)
+vector<Token> tokenize(const string &str)
 {
-	//	Regex matching tokens of interest
-	static const regex r("[\\w.]+|[/-]|,|;|:|[\\(\\)\\+\\*\\^]|!=|>=|<=|[<>=]");
+        vector<Token> v;
+        v.reserve(str.size());
 
-	//	Result, with max possible size reserved
-	vector<string> v;
-	v.reserve(str.size());
+        size_t i = 0;
+        while (i < str.size())
+        {
+                char c = str[i];
+                if (isspace(static_cast<unsigned char>(c)))
+                {
+                        ++i;
+                        continue;
+                }
 
-	//	Loop over matches
-	for (sregex_iterator it(str.begin(), str.end(), r), end; it != end; ++it)
-	{
-		//	Copy match into results
-		v.push_back((*it)[0]);
-		//	Uppercase
-		std::transform(v.back().begin(), v.back().end(), v.back().begin(), [](unsigned char c)
-					   { return std::toupper(c); });
-	}
+                if (isdigit(static_cast<unsigned char>(c)) || (c == '.' && i + 1 < str.size() && isdigit(static_cast<unsigned char>(str[i + 1]))))
+                {
+                        size_t j = i;
+                        while (j < str.size() && (isdigit(static_cast<unsigned char>(str[j])) || str[j] == '.'))
+                                ++j;
+                        v.emplace_back(stod(str.substr(i, j - i)));
+                        i = j;
+                }
+                else if (isalpha(static_cast<unsigned char>(c)) || c == '_')
+                {
+                        size_t j = i;
+                        while (j < str.size() && (isalnum(static_cast<unsigned char>(str[j])) || str[j] == '_'))
+                                ++j;
+                        string s = str.substr(i, j - i);
+                        string up;
+                        up.reserve(s.size());
+                        for (char ch : s)
+                                up.push_back(static_cast<char>(toupper(static_cast<unsigned char>(ch))));
+                        Token::Type t = Token::Type::Identifier;
+                        if (up == "IF" || up == "ELSE" || up == "END" || up == "FOR" || up == "IN" || up == "TO" || up == "PAYS")
+                                t = Token::Type::Keyword;
+                        v.emplace_back(up, t);
+                        i = j;
+                }
+                else
+                {
+                        if (i + 1 < str.size())
+                        {
+                                string two = str.substr(i, 2);
+                                if (two == ">=" || two == "<=" || two == "!=")
+                                {
+                                        v.emplace_back(two, Token::Type::Symbol);
+                                        i += 2;
+                                        continue;
+                                }
+                        }
+                        v.emplace_back(c);
+                        ++i;
+                }
+        }
 
-	//	C++11 move semantics means no copy
-	return v;
+        return v;
 }
 
-//	Event = vector<Statement>
+//      Event = vector<Statement>
 Event parse(const string &eventString)
 {
-	Event e;
+        Event e;
 
-	auto tokens = tokenize(eventString);
+        auto tokens = tokenize(eventString);
 
-	auto it = tokens.begin();
-	while (it != tokens.end())
-	{
-		e.push_back(Parser<decltype(it)>::parseStatement(it, tokens.end()));
-	}
+        auto it = tokens.begin();
+        while (it != tokens.end())
+        {
+                e.push_back(Parser<decltype(it)>::parseStatement(it, tokens.end()));
+        }
 
-	//	C++11 --> vectors are moved, not copied
-	return e;
+        //      C++11 --> vectors are moved, not copied
+        return e;
 }
 
-//	Single expression
+//      Single expression
 Expression parseExpression(const string &exprString)
 {
-	auto tokens = tokenize(exprString);
-	auto it = tokens.begin();
-	return Parser<decltype(tokens.begin())>::parseStatement(it, tokens.end());
+        auto tokens = tokenize(exprString);
+        auto it = tokens.begin();
+        return Parser<decltype(tokens.begin())>::parseStatement(it, tokens.end());
 }
